@@ -96,11 +96,11 @@ class _StateCacheEntry:
         prev_group: Optional[int] = None,
         delta_ids: Optional[StateMap[str]] = None,
     ):
-        if state is not None and state_group is not None:
+        if state is None and state_group is None:
             raise Exception("Either state or state group must be not None")
 
         # A map from (type, state_key) to event_id.
-        self.state = frozendict(state) if state else None
+        self.state = frozendict(state) if state is not None else None
 
         # the ID of a state group if one and only one is involved.
         # otherwise, None otherwise?
@@ -280,6 +280,9 @@ class StateHandler:
                 await_full_state=False,
             )
 
+            state_group_before_event_prev_group = entry.prev_group
+            deltas_to_state_group_before_event = entry.delta_ids
+
             # We make sure that we have a state group assigned to the state.
             if entry.state_group is None:
                 state_ids_before_event = await entry.get_state(
@@ -297,9 +300,6 @@ class StateHandler:
             else:
                 state_group_before_event = entry.state_group
                 state_ids_before_event = None
-
-            state_group_before_event_prev_group = entry.prev_group
-            deltas_to_state_group_before_event = entry.delta_ids
 
         #
         # now if it's not a state event, we're done
